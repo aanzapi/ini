@@ -1,0 +1,606 @@
+<%- include('partials/header', { title: 'Dashboard' }) %>
+
+<!-- Modal Popup Notifikasi (Permanen muncul setiap buka dashboard) -->
+<div id="notificationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden transition-all duration-300">
+  <div class="bg-white rounded-2xl max-w-md w-full mx-4 overflow-hidden shadow-2xl transform transition-all duration-300 scale-95 opacity-0" id="notificationModalContent">
+    <div id="notifImageContainer" class="hidden">
+      <img id="notifImage" src="" alt="Notification" class="w-full object-cover" style="aspect-ratio: 16/9;">
+    </div>
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <i class="fas fa-bell text-blue-500 text-lg"></i>
+          </div>
+          <h3 id="notifTitle" class="text-xl font-bold text-gray-800">Pengumuman</h3>
+        </div>
+        <button onclick="closeNotification()" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <p id="notifMessage" class="text-gray-600 mb-6 leading-relaxed"></p>
+      <button onclick="closeNotification()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition">
+        <i class="fas fa-check-circle mr-2"></i> Mengerti
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     SALDO CARD - PREMIUM WITH BACKGROUND IMAGE (BESAR)
+     ============================================ -->
+<% const balanceBg = (typeof settings !== 'undefined' && settings.balanceBgUrl && settings.balanceBgUrl.trim() !== '') ? settings.balanceBgUrl : '/assets/bg.jpg'; %>
+<div class="relative rounded-2xl overflow-hidden mb-6 shadow-xl shadow-blue-500/10 group" style="min-height: 190px;">
+  <!-- Background Image -->
+  <div class="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 group-hover:scale-100 transition-transform duration-700" 
+       style="background-image: url('<%= balanceBg %>');">
+  </div>
+  
+  <!-- Overlay Gradient -->
+  <div class="absolute inset-0 bg-gradient-to-br from-black/40 via-black/25 to-black/50 backdrop-blur-[1px]"></div>
+  
+  <!-- Glass Overlay -->
+  <div class="absolute inset-0 bg-gradient-to-t from-blue-600/10 to-transparent"></div>
+  
+  <div class="relative z-10 px-6 py-5 md:py-6">
+    <!-- Top Row: User Info + Actions -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-base shadow-sm">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <div>
+          <p class="text-base font-semibold text-white leading-tight"><%= user.username %></p>
+          <p id="userEmail" class="text-[11px] font-medium text-white/80"><%= user.email %></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="/chat/user" class="relative w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white backdrop-blur-md border border-white/10">
+          <i class="fa-solid fa-comment-dots text-sm"></i>
+          <% if (unreadChatCount && unreadChatCount > 0) { %>
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+              <%= unreadChatCount > 9 ? '9+' : unreadChatCount %>
+            </span>
+          <% } %>
+        </a>
+        <a href="/profile" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white backdrop-blur-md border border-white/10">
+          <i class="fa-solid fa-gear text-sm"></i>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Balance & Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
+        <p class="text-[10px] font-medium text-white/60 uppercase tracking-wider mb-1">Saldo Tersedia</p>
+        <div class="flex items-center gap-2">
+          <span id="balanceHidden" class="text-2xl font-bold text-white hidden">Rp ••••••</span>
+          <span id="balanceReal" class="text-2xl font-bold text-white">Rp <%= (user.balance || 0).toLocaleString('id-ID') %></span>
+          <button onclick="toggleBalance()" class="text-white/50 hover:text-white transition-colors">
+            <i id="balanceEyeIcon" class="far fa-eye-slash text-sm"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex gap-2.5 w-full sm:w-auto">
+        <a href="/deposit" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white text-blue-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl text-xs font-medium shadow-lg shadow-black/10 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+          <i class="fas fa-plus text-xs"></i> Isi
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     BUTTON SHORTCUT - 3 BUTTON (Telegram, WhatsApp, Event)
+     ============================================ -->
+<div class="space-y-3 mb-5">
+  <!-- Telegram -->
+  <a href="https://t.me/aanchannell" target="_blank" class="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl px-5 py-3.5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+          <i class="fab fa-telegram-plane text-lg"></i>
+        </div>
+        <div class="text-left">
+          <p class="text-sm font-semibold">Telegram</p>
+          <p class="text-[10px] text-white/80">Informasi Real Time Website - Wajib Bergabung</p>
+        </div>
+      </div>
+      <i class="fas fa-chevron-right text-sm opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"></i>
+    </div>
+  </a>
+  
+  <!-- WhatsApp -->
+  <a href="<%= settings.channelWhatsApp || 'https://wa.me/628988106426' %>" target="_blank" class="block w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl px-5 py-3.5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+          <i class="fab fa-whatsapp text-lg"></i>
+        </div>
+        <div class="text-left">
+          <p class="text-sm font-semibold">WhatsApp</p>
+          <p class="text-[10px] text-white/80">Dapatkan info terbaru via WhatsApp</p>
+        </div>
+      </div>
+      <i class="fas fa-chevron-right text-sm opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"></i>
+    </div>
+  </a>
+  
+  <!-- Event -->
+  <a href="/events" class="block w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl px-5 py-3.5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+          <i class="fas fa-gift text-lg"></i>
+        </div>
+        <div class="text-left">
+          <p class="text-sm font-semibold">Event</p>
+          <p class="text-[10px] text-white/80">Lihat event & promo terbaru</p>
+        </div>
+      </div>
+      <i class="fas fa-chevron-right text-sm opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"></i>
+    </div>
+  </a>
+</div>
+
+<!-- ============================================
+     STATISTIK - VERTICAL STACK
+     ============================================ -->
+<div class="space-y-2.5 mb-5">
+  <!-- Total Transaksi -->
+  <div class="bg-gradient-to-br from-white to-sky-50/50 rounded-2xl border border-sky-100/50 shadow-sm shadow-sky-100/20 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-500/25">
+          <i class="fas fa-exchange-alt text-sm"></i>
+        </div>
+        <div>
+          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Total Transaksi</p>
+          <p class="text-base font-bold text-slate-800"><%= recentTrx ? recentTrx.length : 0 %> Transaksi</p>
+        </div>
+      </div>
+      <i class="fas fa-chevron-right text-slate-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity"></i>
+    </div>
+  </div>
+  
+  <!-- Total Deposit -->
+  <div class="bg-gradient-to-br from-white to-blue-50/50 rounded-2xl border border-blue-100/50 shadow-sm shadow-blue-100/20 p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25">
+          <i class="fas fa-arrow-down text-sm"></i>
+        </div>
+        <div>
+          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Total Deposit</p>
+          <p class="text-base font-bold text-slate-800">Rp <%= (totalDeposit || 0).toLocaleString('id-ID') %></p>
+        </div>
+      </div>
+      <i class="fas fa-chevron-right text-slate-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity"></i>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     BERITA & PENGUMUMAN - SLIDER (AUTO 3 DETIK + SWIPE)
+     ============================================ -->
+<% if (allNotifications && allNotifications.length > 0) { %>
+<div class="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden mb-8">
+  <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+        <i class="fas fa-newspaper text-sm"></i>
+      </div>
+      <h2 class="text-base font-semibold text-gray-800">Berita & Pengumuman</h2>
+    </div>
+    <span class="text-xs text-gray-400"><%= allNotifications.length %> notifikasi</span>
+  </div>
+
+  <div class="relative" id="notifSlider">
+    <!-- Track -->
+    <div id="notifTrack" class="flex transition-transform duration-500 ease-out select-none" style="cursor: grab;">
+      <% allNotifications.forEach(notif => { %>
+        <div class="notif-slide w-full flex-shrink-0 p-5">
+          <div class="flex flex-col md:flex-row gap-5">
+            <% if (notif.imageUrl && notif.imageUrl.trim() !== '') { %>
+              <div class="md:w-56 flex-shrink-0">
+                <img src="<%= notif.imageUrl %>" alt="<%= notif.title %>" class="w-full rounded-xl shadow-sm transition object-cover pointer-events-none" style="aspect-ratio: 16/9;" draggable="false">
+              </div>
+            <% } %>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-gray-800 mb-2"><%= notif.title %></h3>
+              <p class="text-sm text-gray-600 leading-relaxed mb-3"><%= notif.message %></p>
+              <div class="flex items-center gap-3 text-xs text-gray-400">
+                <span><i class="fas fa-calendar-alt mr-1"></i> <%= new Date(notif.createdAt).toLocaleDateString('id-ID') %></span>
+                <span><i class="fas fa-clock mr-1"></i> <%= new Date(notif.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <% if (allNotifications.length > 1) { %>
+      <!-- Prev -->
+      <button onclick="slideNotif(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-600 transition z-10">
+        <i class="fas fa-chevron-left text-xs"></i>
+      </button>
+      <!-- Next -->
+      <button onclick="slideNotif(1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-600 transition z-10">
+        <i class="fas fa-chevron-right text-xs"></i>
+      </button>
+
+      <!-- Dots -->
+      <div id="notifDots" class="flex items-center justify-center gap-1.5 pb-4">
+        <% allNotifications.forEach((_, i) => { %>
+          <button onclick="goToNotif(<%= i %>)" class="notif-dot w-2 h-2 rounded-full transition-all <%= i === 0 ? 'bg-blue-600 w-5' : 'bg-gray-300' %>"></button>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const track = document.getElementById('notifTrack');
+    if (!track) return;
+    const slides = track.querySelectorAll('.notif-slide');
+    const total = slides.length;
+    if (total === 0) return;
+
+    let current = 0;
+    let autoTimer = null;
+    const DELAY = 3000;
+
+    const dots = document.querySelectorAll('.notif-dot');
+
+    function updateDots() {
+      dots.forEach((d, i) => {
+        if (i === current) {
+          d.classList.add('bg-blue-600', 'w-5');
+          d.classList.remove('bg-gray-300');
+        } else {
+          d.classList.remove('bg-blue-600', 'w-5');
+          d.classList.add('bg-gray-300');
+        }
+      });
+    }
+
+    function goTo(index) {
+      if (index < 0) index = total - 1;
+      if (index >= total) index = 0;
+      current = index;
+      track.style.transform = `translateX(-${current * 100}%)`;
+      updateDots();
+    }
+
+    window.slideNotif = function(dir) {
+      goTo(current + dir);
+      restartAuto();
+    };
+
+    window.goToNotif = function(i) {
+      goTo(i);
+      restartAuto();
+    };
+
+    function startAuto() {
+      if (total <= 1) return;
+      autoTimer = setInterval(() => goTo(current + 1), DELAY);
+    }
+
+    function stopAuto() {
+      if (autoTimer) clearInterval(autoTimer);
+    }
+
+    function restartAuto() {
+      stopAuto();
+      startAuto();
+    }
+
+    startAuto();
+
+    // Pause on hover
+    const slider = document.getElementById('notifSlider');
+    slider.addEventListener('mouseenter', stopAuto);
+    slider.addEventListener('mouseleave', startAuto);
+
+    // Drag / Swipe
+    let startX = 0, isDown = false, deltaX = 0;
+
+    function getX(e) {
+      return e.touches ? e.touches[0].clientX : e.clientX;
+    }
+
+    function onDown(e) {
+      isDown = true;
+      startX = getX(e);
+      deltaX = 0;
+      track.style.transition = 'none';
+      track.style.cursor = 'grabbing';
+      stopAuto();
+    }
+
+    function onMove(e) {
+      if (!isDown) return;
+      deltaX = getX(e) - startX;
+      const offset = -current * 100;
+      const width = slider.offsetWidth || 1;
+      const percentMove = (deltaX / width) * 100;
+      track.style.transform = `translateX(${offset + percentMove}%)`;
+    }
+
+    function onUp() {
+      if (!isDown) return;
+      isDown = false;
+      track.style.transition = 'transform 500ms ease-out';
+      track.style.cursor = 'grab';
+      const threshold = 50;
+      if (deltaX < -threshold) goTo(current + 1);
+      else if (deltaX > threshold) goTo(current - 1);
+      else goTo(current);
+      startAuto();
+    }
+
+    track.addEventListener('mousedown', onDown);
+    track.addEventListener('mousemove', onMove);
+    track.addEventListener('mouseup', onUp);
+    track.addEventListener('mouseleave', onUp);
+
+    track.addEventListener('touchstart', onDown, { passive: true });
+    track.addEventListener('touchmove', onMove, { passive: true });
+    track.addEventListener('touchend', onUp);
+
+    // Prevent image drag
+    track.querySelectorAll('img').forEach(img => {
+      img.addEventListener('dragstart', e => e.preventDefault());
+    });
+  })();
+</script>
+<% } %>
+
+<!-- ============================================
+     KUNCI API - Premium Glass Card
+     ============================================ -->
+<div class="bg-gradient-to-br from-white to-slate-50/50 rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-5 mb-6 transition-all duration-300 hover:shadow-md">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25">
+        <i class="fas fa-key text-sm"></i>
+      </div>
+      <div>
+        <h2 class="text-sm font-semibold text-slate-800">Kunci API</h2>
+        <p class="text-[10px] text-slate-400">Kunci API bersifat rahasia</p>
+      </div>
+    </div>
+    <button onclick="openRegenModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2.5 rounded-xl text-[11px] font-medium shadow-sm shadow-blue-500/25 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2">
+      <i class="fas fa-rotate text-[10px]"></i> Buat Baru
+    </button>
+  </div>
+  
+  <div class="flex items-center bg-white border border-slate-200 rounded-xl p-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100/50 transition-all">
+    <input id="apiKeyField" type="password" value="<%= apiKeys && apiKeys.length > 0 ? apiKeys[0].key : '' %>" readonly class="flex-1 bg-transparent px-3 text-xs font-mono text-slate-700 outline-none w-full">
+    <div class="flex items-center gap-1 pr-1">
+      <button onclick="toggleApiKey()" class="w-9 h-9 text-slate-400 hover:text-slate-600 rounded-xl transition-all flex items-center justify-center hover:bg-slate-50">
+        <i id="apiKeyToggleIcon" class="far fa-eye text-sm"></i>
+      </button>
+      <button onclick="copyKey()" class="w-9 h-9 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 rounded-xl transition-all flex items-center justify-center shadow-sm shadow-blue-200">
+        <i class="far fa-copy text-sm"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     TRANSAKSI TERBARU - Premium
+     ============================================ -->
+<div class="flex items-center justify-between mb-3">
+  <div class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-sm shadow-blue-500/25">
+      <i class="fas fa-receipt text-xs"></i>
+    </div>
+    <h2 class="text-sm font-semibold text-slate-800">Transaksi Terbaru</h2>
+  </div>
+  <a href="/deposit" class="text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+    Lihat Semua <i class="fas fa-chevron-right text-[9px]"></i>
+  </a>
+</div>
+
+<div class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden mb-5 transition-all duration-300 hover:shadow-md">
+  <% if (!recentTrx || recentTrx.length === 0) { %>
+    <div class="p-8 text-center">
+      <div class="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
+        <i class="fas fa-receipt text-2xl text-slate-300"></i>
+      </div>
+      <p class="text-sm font-medium text-slate-400">Belum ada transaksi</p>
+    </div>
+  <% } else { %>
+    <div class="divide-y divide-slate-100">
+      <% recentTrx.slice(0, 5).forEach(t => { %>
+      <a href="/invoice/<%= t.reference %>" class="px-4 py-3.5 hover:bg-slate-50/80 transition-colors duration-200 flex items-center justify-between group">
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 
+            <%= t.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 
+                t.status === 'pending' ? 'bg-amber-50 text-amber-600' : 
+                'bg-rose-50 text-rose-600' %>">
+            <i class="fas fa-arrow-down text-sm"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-medium text-slate-600 truncate">#<%= t.reference %></span>
+              <span class="inline-flex items-center gap-1 text-[10px] font-medium 
+                <%= t.status==='paid' ? 'text-emerald-600' : 
+                    t.status==='pending' ? 'text-amber-600' : 
+                    'text-rose-600' %>">
+                <i class="fas fa-circle text-[5px]"></i>
+                <%= t.status.charAt(0).toUpperCase() + t.status.slice(1) %>
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-400">
+              <%= new Date(t.createdAt).toLocaleString('id-ID', {
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) %>
+            </p>
+          </div>
+        </div>
+        <div class="text-right ml-3 shrink-0">
+          <p class="text-sm font-bold text-slate-800">
+            <% if (t.type === 'deposit' || t.amount > 0) { %>
+              <span class="text-emerald-600">+Rp<%= (t.amount || 0).toLocaleString('id-ID') %></span>
+            <% } else { %>
+              <span class="text-rose-600">-Rp<%= Math.abs(t.amount || 0).toLocaleString('id-ID') %></span>
+            <% } %>
+          </p>
+          <p class="text-[10px] text-slate-400">Fee Rp<%= (t.fee || 0).toLocaleString('id-ID') %></p>
+        </div>
+      </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<!-- ============================================
+     SCRIPTS
+     ============================================ -->
+<script>
+  let currentNotification = null;
+  let isModalOpen = false;
+  
+  async function checkAndShowNotification() {
+    try {
+      const response = await fetch('/api/notifications/active');
+      const data = await response.json();
+      
+      if (data.success && data.notifications && data.notifications.length > 0) {
+        let notifToShow = null;
+        
+        for (const notif of data.notifications) {
+          if (notif.displayType === 'permanent') {
+            notifToShow = notif;
+            break;
+          }
+        }
+        
+        if (notifToShow && !isModalOpen) {
+          currentNotification = notifToShow;
+          showNotification(currentNotification);
+          isModalOpen = true;
+          
+          fetch(`/api/notifications/seen/${notifToShow._id}`, { method: 'POST' });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  }
+  
+  function showNotification(notif) {
+    const modal = document.getElementById('notificationModal');
+    const content = document.getElementById('notificationModalContent');
+    const titleEl = document.getElementById('notifTitle');
+    const messageEl = document.getElementById('notifMessage');
+    const imageContainer = document.getElementById('notifImageContainer');
+    const imageEl = document.getElementById('notifImage');
+    
+    titleEl.textContent = notif.title || 'Pengumuman';
+    messageEl.textContent = notif.message;
+    
+        if (notif.imageUrl && notif.imageUrl.trim() !== '') {
+      imageEl.src = notif.imageUrl;
+      imageContainer.classList.remove('hidden');
+    } else {
+      imageContainer.classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+  
+  function closeNotification() {
+    const modal = document.getElementById('notificationModal');
+    const content = document.getElementById('notificationModalContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      isModalOpen = false;
+    }, 300);
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAndShowNotification();
+  });
+  
+  function maskEmail(email) {
+    if (!email || !email.includes('@')) return email;
+    const [name, domain] = email.split('@');
+    if (name.length <= 2) return `**@${domain}`;
+    return name.substring(0, 2) + '****' + '@' + domain;
+  }
+  
+  const emailEl = document.getElementById('userEmail');
+  if (emailEl && emailEl.textContent) {
+    emailEl.textContent = maskEmail('<%= user.email %>');
+  }
+
+  function toggleApiKey() {
+    const field = document.getElementById('apiKeyField');
+    const icon = document.getElementById('apiKeyToggleIcon');
+    if (field) field.type = field.type === 'password' ? 'text' : 'password';
+    if (icon) {
+      icon.classList.toggle('fa-eye');
+      icon.classList.toggle('fa-eye-slash');
+    }
+  }
+
+  function toggleBalance() {
+    const hidden = document.getElementById('balanceHidden');
+    const real = document.getElementById('balanceReal');
+    const icon = document.getElementById('balanceEyeIcon');
+    if (real) real.classList.toggle('hidden');
+    if (hidden) hidden.classList.toggle('hidden');
+    if (icon) {
+      icon.classList.toggle('fa-eye-slash');
+      icon.classList.toggle('fa-eye');
+    }
+  }
+
+  function copyKey() {
+    const field = document.getElementById('apiKeyField');
+    if (!field || !field.value) return;
+    navigator.clipboard.writeText(field.value);
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.className = 'fas fa-check text-sm';
+      setTimeout(() => { icon.className = 'far fa-copy text-sm'; }, 2000);
+    }
+  }
+
+  function openRegenModal() {
+    if (confirm('Apakah Anda yakin ingin membuat API Key baru? Key lama akan tidak berlaku.')) {
+      fetch('/api/user/api-key/regenerate', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.apiKey) {
+            document.getElementById('apiKeyField').value = data.apiKey;
+            alert('API Key baru berhasil dibuat!');
+          } else {
+            alert('Gagal membuat API Key baru');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Terjadi kesalahan');
+        });
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>
